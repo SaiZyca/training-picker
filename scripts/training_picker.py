@@ -240,7 +240,7 @@ def on_ui_tabs():
                 with gr.Row():
                     extract_mode_input = gr.Radio(choices=["Scene change", "Step","Only extract keyframes"], label="Extexck Mode", info="extract keyframe methods",interactive=True,value="Scene change")
                 with gr.Row():
-                    change_sensitivity_input = gr.Slider(0.05, 1, value=0.3, label="scene change sensitivity", interactive=True)
+                    change_sensitivity_input = gr.Slider(0.0001, 1, value=0.3, label="scene change sensitivity", interactive=True)
                     frame_step_input = gr.Number(value=5, min=1, label="Extract every nth frame", interactive=True)
                     overwrite_exist_checkbox = gr.Checkbox(value=True, label="Overwrite exist files",interactive=True)
 
@@ -315,7 +315,6 @@ def on_ui_tabs():
                 elif extract_mode == "Scene change":
                     stream = ffmpeg.input(
                         str(full_path),
-                        skip_frame="nokey",
                         vsync="vfr",
                     )
                     stream.output(
