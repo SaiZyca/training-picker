@@ -35,3 +35,10 @@ Optionally, you can also just supply a large collection of individual images you
 * Select an outfill method to outfill the non-square area of a rectangular crop into a square shape
 * Click "Bulk process frames with chosen outfill method" to automatically process every image in the current frame set using the outfill method chosen, outputting to the directory under "Save crops to:"
 * Crops will be saved to `training-picker/cropped-frames` by default
+
+## Modied by Sai Ling
+
+* Add extract frame by scene change sensitivity  
+* Add Overwrite exist checkbox  
+
+![image](https://raw.githubusercontent.com/SaiZyca/tempfiles/master/msedge_Tolo3LWNQo.png)

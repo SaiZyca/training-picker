@@ -238,16 +238,12 @@ def on_ui_tabs():
                     create_refresh_button(video_dropdown, lambda: None, lambda: {"choices": get_videos_list()}, "refresh_videos_list")
                     create_open_folder_button(videos_path, "open_folder_videos")
                 with gr.Row():
-                    with gr.Column():
-                        extract_mode_input = gr.Radio(choices=["Scene change", "Step","Only extract keyframes"], label="Extexck Mode", info="extract keyframe methods",interactive=True,value="Scene change")
-                        with gr.Row():
-                            change_sensitivity_input = gr.Number(value=0.3, min=0.05, max=1, label="scene change sensitivity", interactive=True)
-                            frame_step_input = gr.Number(value=5, min=1, label="Extract every nth frame", interactive=True)
-                            overwrite_exist_checkbox = gr.Checkbox(value=True, label="Overwrite exist files",interactive=True)
-                with gr.Row(visible=False):
-                    only_keyframes_checkbox = gr.Checkbox(value=True, label="Only extract keyframes (recommended)")
-                    with gr.Column(visible=False) as frame_skip_container:
-                        frame_skip_input = gr.Number(value=1, min=1, label="Extract every nth frame", interactive=True)
+                    extract_mode_input = gr.Radio(choices=["Scene change", "Step","Only extract keyframes"], label="Extexck Mode", info="extract keyframe methods",interactive=True,value="Scene change")
+                with gr.Row():
+                    change_sensitivity_input = gr.Slider(0.05, 1, value=0.3, label="scene change sensitivity", interactive=True)
+                    frame_step_input = gr.Number(value=5, min=1, label="Extract every nth frame", interactive=True)
+                    overwrite_exist_checkbox = gr.Checkbox(value=True, label="Overwrite exist files",interactive=True)
+
                 extract_frames_button = gr.Button(value="Extract Frames", variant="primary")
                 log_output = gr.HTML(value="")
             with gr.Column():
@@ -350,11 +346,6 @@ def on_ui_tabs():
 
         def null_image_update():
             return gr.update(), 0, ""
-
-        def only_keyframes_checkbox_change(only_keyframes_checkbox):
-            return gr.update(visible=not only_keyframes_checkbox)
-        
-        only_keyframes_checkbox.change(fn=only_keyframes_checkbox_change, inputs=[only_keyframes_checkbox], outputs=[frame_skip_container])
 
         def frameset_dropdown_change(frameset):
             global current_frame_set_index
