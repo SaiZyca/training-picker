@@ -304,7 +304,8 @@ def on_ui_tabs():
                         print("Directory already exists!")
                         return gr.update(), f"Frame set already exists at {output_path}! Delete the folder first if you would like to recreate it."
                 os.makedirs(output_path, exist_ok=True)
-                output_name_fmat = str((output_path / "%06d.png").resolve())
+                output_name_fmat = "%s/%s_%s" % (output_path, Path(video_file).stem, "%06d.png")
+                # output_name_fmat = str((output_path / "%06d.png").resolve())
                 if extract_mode == "Only extract keyframes":
                     stream = ffmpeg.input(
                         str(full_path),
