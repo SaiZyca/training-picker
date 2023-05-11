@@ -1,1 +1,4 @@
 scripts/__pycache__/
+scripts/ffmpeg.exe
+scripts/ffplay.exe
+scripts/ffprobe.exe
