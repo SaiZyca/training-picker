@@ -233,18 +233,23 @@ def on_ui_tabs():
         # structure
         with gr.Row():
             with gr.Column():
-                with gr.Row():
+                with gr.Row().style(equal_height=True):
                     video_dropdown = gr.Dropdown(choices=videos_list, elem_id="video_dropdown", label="Video to extract frames from:")
                     create_refresh_button(video_dropdown, lambda: None, lambda: {"choices": get_videos_list()}, "refresh_videos_list")
                     create_open_folder_button(videos_path, "open_folder_videos")
                 with gr.Row():
-                    extract_mode_input = gr.Radio(choices=["Scene change", "Step","Only extract keyframes"], label="Extexck Mode", info="extract keyframe methods",interactive=True,value="Scene change")
+                    extract_keyframe_type = gr.Radio(choices=["Full", "I","B","P"], 
+                                                  label="Keyframe Type ( pict_type )", 
+                                                  interactive=True,
+                                                  value="Full")
                 with gr.Row():
-                    change_sensitivity_input = gr.Slider(0.0001, 1, value=0.3, label="scene change sensitivity", interactive=True)
-                    frame_step_input = gr.Number(value=5, min=1, label="Extract every nth frame", interactive=True)
+                    scene_sensitivity_input = gr.Slider(0, 1, value=0.3, label="scene sensitivity", info="(0 = Disable)", interactive=True, step=0.01)
+                    blur_sensitivity_input = gr.Slider(0, 16, value=6, label="blur sensitivity", info="(if < 6 will very slow)", interactive=True, step=1)
+                    frame_step_input = gr.Slider(1, 100, value=1, label="Extract every nth frame", info="(1 = Perframe)", interactive=True, step=1)
+                with gr.Row():
+                    extract_frames_button = gr.Button(value="Extract Frames", variant="primary")
                     overwrite_exist_checkbox = gr.Checkbox(value=True, label="Overwrite exist files",interactive=True)
-
-                extract_frames_button = gr.Button(value="Extract Frames", variant="primary")
+                    
                 log_output = gr.HTML(value="")
             with gr.Column():
                 with gr.Row():
@@ -271,6 +276,7 @@ def on_ui_tabs():
                 with gr.Row():
                     output_dir = gr.Text(value=default_output_path, label="Save crops to:")
                     create_open_folder_button(output_dir, "open_folder_crops")
+        
         with gr.Row():
             with gr.Column():
                 crop_preview = gr.Image(interactive=False, elem_id="crop_preview", show_label=False)
@@ -286,58 +292,42 @@ def on_ui_tabs():
         # invisible elements
         crop_button = gr.Button(elem_id="crop_button", visible=False)
         crop_parameters = gr.Text(elem_id="crop_parameters", visible=False)
+        
 
         # events
-        def extract_frames_button_click(video_file, extract_mode, frame_skip_input, change_sensitivity,overwrite_exist):
-            try:
-                import ffmpeg
-            except ModuleNotFoundError:
-                print("Installing ffmpeg-python")
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "ffmpeg-python"])
-                import ffmpeg
-            try:
-                print(f"Extracting frames from {video_file}")
-                full_path = videos_path / video_file
-                output_path = framesets_path / Path(video_file).stem
-                if not overwrite_exist:
-                    if output_path.is_dir():
-                        print("Directory already exists!")
-                        return gr.update(), f"Frame set already exists at {output_path}! Delete the folder first if you would like to recreate it."
-                os.makedirs(output_path, exist_ok=True)
-                output_name_fmat = "%s/%s_%s" % (output_path, Path(video_file).stem, "%06d.png")
-                # output_name_fmat = str((output_path / "%06d.png").resolve())
-                if extract_mode == "Only extract keyframes":
-                    stream = ffmpeg.input(
-                        str(full_path),
-                        skip_frame="nokey",
-                        vsync="vfr",
-                    )
-                    stream.output(output_name_fmat).run()
-                elif extract_mode == "Scene change":
-                    stream = ffmpeg.input(
-                        str(full_path),
-                        vsync="vfr",
-                    )
-                    stream.output(
-                        output_name_fmat,
-                        vf=f"select='gt(scene,{change_sensitivity})'",
-                    ).run()
-                elif extract_mode == "Step":
-                    stream = ffmpeg.input(
-                        str(full_path),
-                        vsync="vfr",
-                    )
-                    stream.output(
-                        output_name_fmat,
-                        vf=f"select=not(mod(n\,{frame_skip_input}))",
-                    ).run()
-                print("Extraction complete!")
-                return gr.Dropdown.update(choices=get_framesets_list()), f"Successfully created frame set {output_path.name}"
-            except Exception as e:
-                print(f"Exception encountered while attempting to extract frames: {e}")
-                return gr.update(), f"Error: {e}"
+        def extract_frames_button_click(video_file, extract_keyframe, frame_step, scene_sensitivity, blur_sensitivity, overwrite_exist):
+            input_path = videos_path / video_file
+            output_path = framesets_path / Path(video_file).stem
+            if not overwrite_exist:
+                if output_path.is_dir():
+                    print("Directory already exists!")
+                    return gr.update(), f"Frame set already exists at {output_path}! Delete the folder first if you would like to recreate it."
+            os.makedirs(output_path, exist_ok=True)
+            output_name_fmat = r"%s\%s_%s" % (output_path, Path(video_file).stem, "%06d.png")
+            command = ""
+            v_filter = "-vf "
+            v_select = "select=not(mod(n\,%s))" % frame_step
+            ffmpeg_bin = "%s/ffmpeg.exe" % os.path.dirname(__file__)
+            if os.path.isfile(ffmpeg_bin):
+                if extract_keyframe != "Full":
+                    v_select += "*eq(pict_type\,%s)" % extract_keyframe
+                if scene_sensitivity != 0:
+                    v_select += "*gt(scene\,%s)" % scene_sensitivity
+                if blur_sensitivity != 0:
+                    v_select += ",blurdetect=block_width=64:block_height=64:block_pct=80,metadata=select:key=lavfi.blur:value=%s:function=less" % blur_sensitivity
+                    
+            # command = r'%s -i %s -vf "%s" -vsync 0 %s\%s_%s' % (ffmpeg_bin, input_path, v_select, output_path, Path(video_file).stem, "%06d.png")
             
-        extract_frames_button.click(fn=extract_frames_button_click, inputs=[video_dropdown, extract_mode_input, frame_step_input, change_sensitivity_input,overwrite_exist_checkbox], outputs=[frameset_dropdown, log_output])
+            subprocess.run([ffmpeg_bin, "-i", input_path, "-vf", v_select, "-vsync", "vfr", output_name_fmat])
+            
+            return gr.update(), command
+                
+
+
+            
+        # collect inputs/outputs
+        inputs = [video_dropdown, extract_keyframe_type, frame_step_input, scene_sensitivity_input, blur_sensitivity_input, overwrite_exist_checkbox]
+        extract_frames_button.click(fn=extract_frames_button_click, inputs=inputs, outputs=[frameset_dropdown, log_output])
 
         def get_image_update():
             global current_frame_set_index
