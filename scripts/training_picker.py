@@ -233,7 +233,7 @@ def on_ui_tabs():
         # structure
         with gr.Row():
             with gr.Column():
-                with gr.Row().style(equal_height=True):
+                with gr.Row():
                     video_dropdown = gr.Dropdown(choices=videos_list, elem_id="video_dropdown", label="Video to extract frames from:")
                     create_refresh_button(video_dropdown, lambda: None, lambda: {"choices": get_videos_list()}, "refresh_videos_list")
                     create_open_folder_button(videos_path, "open_folder_videos")
@@ -265,7 +265,7 @@ def on_ui_tabs():
                             reset_aspect_ratio_button = gr.Button(value="Reset Aspect Ratio")
                             bulk_process_button = gr.Button(value="Process", variant="primary")
                 with gr.Row(visible=False) as outfill_setting_options:
-                    with gr.Column(visible=False, scale=0.3) as original_image_outfill_setting_container:
+                    with gr.Column(visible=False) as original_image_outfill_setting_container:
                         outfill_original_image_outfill_setting = gr.Dropdown(label="Image border outfill method:", scale=0.3, value="Stretch pixels at border", choices=["Stretch pixels at border", "Reflect image around border", "Black outfill"])
                     with gr.Column(visible=False) as color_container:
                         outfill_color = gr.ColorPicker(value="#000000", label="Outfill border color:", interactive=True)
